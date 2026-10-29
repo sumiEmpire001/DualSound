@@ -50,6 +50,25 @@ jobs:
       - name: Generate Gradle wrapper
         run: gradle -p starter/DualSound wrapper --gradle-version 8.11.1
 
+      - name: Align Java and Kotlin JVM targets
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("starter/DualSound/app/build.gradle.kts")
+          s = p.read_text()
+          if "compileOptions {" not in s:
+              marker = "android {"
+              if marker not in s:
+                  raise SystemExit("Expected android block missing")
+              s = s.replace(marker, marker + """
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+""", 1)
+          p.write_text(s)
+          PY
+
       - name: Build debug APK
         run: starter/DualSound/gradlew -p starter/DualSound assembleDebug
 
